@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Interactive Tic-Tac-Toe</title>
+    <title>Super Interactive Tic-Tac-Toe with Cheats</title>
     <style>
         body {
             display: flex;
@@ -117,6 +117,9 @@
             animation: click 0.2s ease-out;
         }
 
+        .cheat-mode {
+            background-color: #ffeb3b !important;
+        }
     </style>
 </head>
 <body>
@@ -137,13 +140,14 @@
         <button onclick="resetGame()">Reset Game</button>
     </div>
 
-    <audio id="clickSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
-    <audio id="winSound" src="https://www.soundjay.com/button/beep-08b.wav"></audio>
-    <audio id="resetSound" src="https://www.soundjay.com/button/button-16.wav"></audio>
+    <!-- Audio for Background Music -->
+    <audio id="backgroundMusic" src="/mnt/data/midnight-ride-01a.mp3" loop autoplay></audio>
 
     <script>
         const board = ['', '', '', '', '', '', '', '', ''];
         let currentPlayer = 'X';
+        let cheatMode = false;
+        let cheatSequence = [];
         const winCombinations = [
             [0, 1, 2],
             [3, 4, 5],
@@ -157,21 +161,17 @@
 
         const cells = document.querySelectorAll('.cell');
         const statusDisplay = document.getElementById('status');
-        const clickSound = document.getElementById('clickSound');
-        const winSound = document.getElementById('winSound');
-        const resetSound = document.getElementById('resetSound');
+        const backgroundMusic = document.getElementById('backgroundMusic');
 
         function handleCellClick(event) {
             const index = event.target.getAttribute('data-index');
-            if (board[index] !== '') return;
+            if (!cheatMode && board[index] !== '') return;
 
-            clickSound.play();
             board[index] = currentPlayer;
             event.target.textContent = currentPlayer;
             event.target.classList.add(currentPlayer.toLowerCase(), 'pop-in');
 
-            if (checkWin()) {
-                winSound.play();
+            if (!cheatMode && checkWin()) {
                 statusDisplay.textContent = `${currentPlayer} wins! 🎉`;
                 highlightWin();
                 endGame();
@@ -207,16 +207,30 @@
         }
 
         function resetGame() {
-            resetSound.play();
             board.fill('');
             cells.forEach(cell => {
                 cell.textContent = '';
-                cell.classList.remove('x', 'o', 'pop-in', 'pulse');
+                cell.classList.remove('x', 'o', 'pop-in', 'pulse', 'cheat-mode');
                 cell.addEventListener('click', handleCellClick);
             });
             currentPlayer = 'X';
             statusDisplay.textContent = `Player ${currentPlayer}'s turn`;
         }
+
+        // Activate cheat mode when 'chaos' is typed
+        window.addEventListener('keydown', (e) => {
+            cheatSequence.push(e.key.toLowerCase());
+            const secretCode = ['c', 'h', 'a', 'o', 's'];
+            if (cheatSequence.slice(-5).join('') === secretCode.join('')) {
+                cheatMode = !cheatMode; // Toggle cheat mode
+                statusDisplay.textContent = cheatMode ? 'Cheat mode activated!' : `Player ${currentPlayer}'s turn`;
+                if (cheatMode) {
+                    cells.forEach(cell => cell.classList.add('cheat-mode'));
+                } else {
+                    cells.forEach(cell => cell.classList.remove('cheat-mode'));
+                }
+            }
+        });
 
         resetGame();
     </script>
