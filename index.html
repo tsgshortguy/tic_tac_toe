@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Interactive Tic-Tac-Toe with Cheats</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #00aaff, #ff00aa);
+            background-size: 400% 400%;
+            animation: gradientBackground 5s ease infinite;
+        }
+
+        @keyframes gradientBackground {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 120px);
+            grid-template-rows: repeat(3, 120px);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            width: 120px;
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #61dafb;
+            border-radius: 15px;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .cell:hover {
+            background-color: #ff69b4;
+            box-shadow: 0 0 20px #ff69b4;
+            transform: scale(1.1);
+        }
+
+        .cell.x {
+            color: #ff6b6b;
+            box-shadow: 0 0 20px #ff6b6b;
+        }
+
+        .cell.o {
+            color: #51cf66;
+            box-shadow: 0 0 20px #51cf66;
+        }
+
+        .cell.x.pulse, .cell.o.pulse {
+            animation: pulseWin 1s ease infinite;
+        }
+
+        @keyframes pulseWin {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        #status {
+            text-align: center;
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            background-color: #21a1f1;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            background-color: #1a90d8;
+        }
+
+        @keyframes click {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pop-in {
+            animation: click 0.2s ease-out;
+        }
+
+        .cheat-mode {
+            background-color: #ffeb3b !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="game-board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+        <div id="status"></div>
+        <button onclick="resetGame()">Reset Game</button>
+    </div>
+
+    <!-- Audio for Background Music -->
+    <audio id="backgroundMusic" src="/mnt/data/midnight-ride-01a.mp3" loop autoplay></audio>
+
+    <script>
+        const board = ['', '', '', '', '', '', '', '', ''];
+        let currentPlayer = 'X';
+        let cheatMode = false;
+        let cheatSequence = [];
+        const winCombinations = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ];
+
+        const cells = document.querySelectorAll('.cell');
+        const statusDisplay = document.getElementById('status');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+
+        function handleCellClick(event) {
+            const index = event.target.getAttribute('data-index');
+            if (!cheatMode && board[index] !== '') return;
+
+            board[index] = currentPlayer;
+            event.target.textContent = currentPlayer;
+            event.target.classList.add(currentPlayer.toLowerCase(), 'pop-in');
+
+            if (!cheatMode && checkWin()) {
+                statusDisplay.textContent = `${currentPlayer} wins! 🎉`;
+                highlightWin();
+                endGame();
+            } else if (board.every(cell => cell !== '')) {
+                statusDisplay.textContent = "It's a draw!";
+            } else {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                statusDisplay.textContent = `Player ${currentPlayer}'s turn`;
+            }
+        }
+
+        function checkWin() {
+            return winCombinations.some(combination => {
+                return combination.every(index => board[index] === currentPlayer);
+            });
+        }
+
+        function highlightWin() {
+            const winningCombination = winCombinations.find(combination => {
+                return combination.every(index => board[index] === currentPlayer);
+            });
+
+            if (winningCombination) {
+                winningCombination.forEach(index => {
+                    const cell = document.querySelector(`.cell[data-index="${index}"]`);
+                    cell.classList.add('pulse');
+                });
+            }
+        }
+
+        function endGame() {
+            cells.forEach(cell => cell.removeEventListener('click', handleCellClick));
+        }
+
+        function resetGame() {
+            board.fill('');
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('x', 'o', 'pop-in', 'pulse', 'cheat-mode');
+                cell.addEventListener('click', handleCellClick);
+            });
+            currentPlayer = 'X';
+            statusDisplay.textContent = `Player ${currentPlayer}'s turn`;
+        }
+
+        // Activate cheat mode when 'chaos' is typed
+        window.addEventListener('keydown', (e) => {
+            cheatSequence.push(e.key.toLowerCase());
+            const secretCode = ['c', 'h', 'a', 'o', 's'];
+            if (cheatSequence.slice(-5).join('') === secretCode.join('')) {
+                cheatMode = !cheatMode; // Toggle cheat mode
+                statusDisplay.textContent = cheatMode ? 'Cheat mode activated!' : `Player ${currentPlayer}'s turn`;
+                if (cheatMode) {
+                    cells.forEach(cell => cell.classList.add('cheat-mode'));
+                } else {
+                    cells.forEach(cell => cell.classList.remove('cheat-mode'));
+                }
+            }
+        });
+
+        resetGame();
+    </script>
+
+</body>
+</html>
